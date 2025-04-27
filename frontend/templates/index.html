@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Munchy.ai</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --primary-color: #2f5d37;
+        --accent-color: #27ae60;
+        --bg-color: #f3f7f4;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+            rgba(47, 93, 55, 0.1),
+            rgba(47, 93, 55, 0.1)
+          ),
+          url("/static/backdrop.jpg") no-repeat center center fixed;
+        background-size: cover;
+        color: #333;
+        padding: 40px 20px;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: auto;
+        background-color: #ffffffee;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .logo {
+        display: block;
+        margin: 0 auto 20px;
+        max-height: 80px;
+      }
+
+      h1 {
+        text-align: center;
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin: 20px 0 10px;
+        font-weight: 600;
+      }
+
+      textarea,
+      input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        font-size: 1rem;
+      }
+
+      .or-divider {
+        text-align: center;
+        color: #777;
+        position: relative;
+        margin: 30px 0;
+      }
+
+      .or-divider::before,
+      .or-divider::after {
+        content: "";
+        height: 1px;
+        width: 40%;
+        background: #ccc;
+        position: absolute;
+        top: 50%;
+      }
+
+      .or-divider::before {
+        left: 0;
+      }
+
+      .or-divider::after {
+        right: 0;
+      }
+
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 14px;
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #264c2f;
+      }
+
+      .result-container {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #e8f5e9;
+        border-radius: 8px;
+        border-left: 5px solid var(--primary-color);
+      }
+
+      .recipe-image {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 8px;
+        display: block;
+        margin: 20px auto;
+      }
+
+      .recipe-text {
+        background-color: #fdfdfd;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        white-space: pre-line;
+        border: 1px dashed var(--primary-color);
+      }
+
+      .success,
+      .error {
+        padding: 12px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 5px solid #28a745;
+      }
+
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 5px solid #e74c3c;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <img
+        src="{{ url_for('static', filename='logo.png') }}"
+        alt="Munchy.ai Logo"
+        class="logo"
+      />
+      <h1>Munchy.ai</h1>
+
+      <form method="POST" enctype="multipart/form-data">
+        <label for="text_input">Enter ingredients (comma separated):</label>
+        <textarea
+          name="text_input"
+          id="text_input"
+          rows="4"
+          placeholder="e.g. chicken, rice, tomatoes, garlic"
+        ></textarea>
+
+        <div class="or-divider">OR</div>
+
+        <label for="image_input">Upload an image of ingredients:</label>
+        <input type="file" name="image" id="image_input" accept="image/*" />
+
+        <button type="submit">Generate Recipe</button>
+      </form>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="{{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %} {% if generated_recipe or
+      uploaded_image %}
+      <div class="result-container">
+        <h3>Your Recipe</h3>
+        {% if uploaded_image %}
+        <p><strong>Generated from your image:</strong></p>
+        <img
+          src="{{ url_for('static', filename='uploads/' + uploaded_image) }}"
+          class="recipe-image"
+        />
+        {% endif %} {% if generated_recipe %}
+        <div class="recipe-text">{{ generated_recipe }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% if generated_recipe %}
+    <div class="result-container" style="margin-top: 20px">
+      <h3>Was this helpful?</h3>
+      <form
+        method="POST"
+        action="{{ url_for('save_feedback') }}"
+        style="text-align: center"
+      >
+        <input type="hidden" name="input_data" value="{{ text_input }}" />
+        <input
+          type="hidden"
+          name="generated_recipe"
+          value="{{ generated_recipe }}"
+        />
+
+        <button type="submit" name="rating" value="like" style="margin: 5px">
+          👍 Like
+        </button>
+        <button type="submit" name="rating" value="dislike" style="margin: 5px">
+          👎 Dislike
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <script>
+      document.querySelector("form").addEventListener("submit", function (e) {
+        const textInput = document.getElementById("text_input").value.trim();
+        const fileInput = document.getElementById("image_input").files.length;
+
+        if (!textInput && !fileInput) {
+          alert("Please enter ingredients or upload an image");
+          e.preventDefault();
+        }
+
+        if (textInput && fileInput) {
+          alert("Please provide either ingredients or an image, not both");
+          e.preventDefault();
+        }
+      });
+    </script>
+  </body>
+</html>
